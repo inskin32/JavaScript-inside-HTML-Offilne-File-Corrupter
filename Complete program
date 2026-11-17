@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <title>Corruttore di File Offline</title>
+  <style>
+    body { font-family: -apple-system, sans-serif; max-width: 500px; margin: 40px auto; padding: 20px; }
+    .box { border: 1px solid #ccc; padding: 20px; border-radius: 8px; }
+    button { margin-top: 15px; padding: 10px 15px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h2>Corruttore di File Locale</h2>
+    <p>Seleziona un file per alterarne casualmente alcuni byte.</p>
+    
+    <input type="file" id="fileInput"><br><br>
+    
+    <label for="intensity">Percentuale di byte da alterare (0.1% - 10%):</label><br>
+    <input type="number" id="intensity" value="1" min="0.1" max="10" step="0.1"> %<br>
+    
+    <button onclick="corruptFile()">Corrompi e Scarica</button>
+  </div>
+
+  <script>
+    function corruptFile() {
+      const fileInput = document.getElementById('fileInput');
+      const intensity = parseFloat(document.getElementById('intensity').value) || 1;
+      
+      if (!fileInput.files.length) {
+        alert("Seleziona prima un file.");
+        return;
+      }
+
+      const file = fileInput.files[0];
+      const reader = new FileReader();
+
+      reader.onload = function(event) {
+        // Legge il file come array di byte grezzi
+        const arrayBuffer = event.target.result;
+        const bytes = new Uint8Array(arrayBuffer);
+        
+        // Calcola quanti byte modificare in base alla percentuale
+        const totalModifications = Math.max(1, Math.floor(bytes.length * (intensity / 100)));
+
+        // Modifica byte casuali (evitando i primissimi byte se vuoi simulare un errore interno)
+        for (let i = 0; i < totalModifications; i++) {
+          const randomIndex = Math.floor(Math.random() * bytes.length);
+          bytes[randomIndex] = Math.floor(Math.random() * 256);
+        }
+
+        // Crea il nuovo file e avvia il download locale
+        const blob = new Blob([bytes], { type: file.type });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = "corrupted_" + file.name;
+        link.click();
+        
+        // Libera la memoria
+        URL.revokeObjectURL(link.href);
+      };
+
+      reader.readAsArrayBuffer(file);
+    }
+  </script>
+</body>
+</html>
